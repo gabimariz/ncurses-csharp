@@ -1,12 +1,37 @@
 using System.Runtime.InteropServices;
 using NCursesCSharp.Enums;
 using NCursesCSharp.Structs;
+using NCursesCSharp.Utils;
 
 namespace NCursesCSharp.Wrappers;
 
 public class NCursesWrapper
 {
-	private const string NCURSES_LIB = "libncursesw.so.6";
+	private static readonly string NLibrary;
+
+	#if WINDOWS
+		private const string NCURSES_LIB = "libncursesw6.dll";
+	#else
+		private const string NCURSES_LIB = "ncurses";
+	#endif
+
+	static NCursesWrapper()
+	{
+
+		#if LINUX
+			Library.Load(out NLibrary);
+
+			NativeLibrary.SetDllImportResolver(typeof(NCursesWrapper).Assembly, (library, assembly, searchPath) =>
+			{
+				if (library != "")
+				{
+					return NativeLibrary.Load(NLibrary);
+				}
+
+				return IntPtr.Zero;
+			});
+		#endif
+	}
 
 	// Import C/C++ ncurses.h functions
 
